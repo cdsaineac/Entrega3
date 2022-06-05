@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import static java.lang.String.valueOf;
@@ -32,6 +33,14 @@ public class SL2Python extends SLBaseListener {
 
     public String sameTerminals[] = {"(", ")", "[", "]"};
 
+    public int count = 0;
+    public int matDim = 0;
+    public ArrayList<String> matArgDim = new ArrayList<>();
+    public boolean isVector = false;
+    public boolean isMatriz = false;
+    public boolean isNotOpenDim = false;
+    public boolean errorSemantico = false;
+
     @Override
     public void enterCodigo(SLParser.CodigoContext ctx) {
         System.out.println("import math");
@@ -39,9 +48,44 @@ public class SL2Python extends SLBaseListener {
         System.out.println("import random");
         System.out.println("import datetime");
         System.out.println("import sys");
-
+        System.out.println("import numpy as np");
+    }
+    @Override
+    public void enterNombre(SLParser.NombreContext ctx){
+        if(!errorSemantico){
+            if(ctx.PROGRAMA() != null){
+                System.out.print("#programa " + ctx.ID().getText());
+            }
+        }
     }
 
+    @Override
+    public void enterVariable(SLParser.VariableContext ctx){
+        if(!errorSemantico){
+            if(ctx.TK_NUMERO() != null){
+                System.out.print(ctx.TK_NUMERO().getText());
+            }
+            if(ctx.TK_CADENA() != null){
+                System.out.print(ctx.TK_CADENA().getText());
+            }
+            if(ctx.TRUE() != null){
+                System.out.print("True");
+            }
+            if(ctx.FALSE() != null){
+                System.out.print("False");
+            }
+            if(ctx.SI() != null){
+                System.out.print("True");
+            }
+            if(ctx.NO() != null){
+                System.out.print("False");
+            }
+        }
+    }
+    @Override
+    public void exitDeclaracion_contenido_const(SLParser.Declaracion_contenido_constContext ctx){
+        System.out.println("");
+    }
     @Override
     public void enterCondicional(SLParser.CondicionalContext ctx){
         System.out.print("if(");
@@ -431,7 +475,22 @@ public class SL2Python extends SLBaseListener {
     public void exitParametros(SLParser.ParametrosContext ctx) {
         inParametros = true;
     }
-
+    @Override
+    public void enterDeclaracion(SLParser.DeclaracionContext ctx){
+        if(!errorSemantico){
+            if(ctx.VAR() != null){
+                System.out.print("\n\n#var\n\n");
+            }else if(ctx.CONST() != null){
+                System.out.print("\n\n#const\n\n");
+            }else if(ctx.TIPOS() != null){
+                System.out.print("\n\n#tipos\n\n");
+            }
+        }
+    }
+    @Override
+    public void exitDeclaracion(SLParser.DeclaracionContext ctx){
+        System.out.println("");
+    }
     @Override
     public void enterDeclaracion_contenido_const(SLParser.Declaracion_contenido_constContext ctx) {
         inConstDeclaracion = true;
@@ -449,6 +508,9 @@ public class SL2Python extends SLBaseListener {
     @Override
     public void enterDeclaracion_contenido_tipos(SLParser.Declaracion_contenido_tiposContext ctx) {
         inDeclaracion = true;
+        if(ctx.ID() != null){
+            System.out.print(ctx.ID().getText());
+        }
     }
 
     @Override
@@ -459,6 +521,9 @@ public class SL2Python extends SLBaseListener {
     @Override
     public void enterDeclaracion_contenido_var(SLParser.Declaracion_contenido_varContext ctx) {
         inDeclaracion = true;
+        if(ctx.ID() != null){
+            System.out.print(ctx.ID().getText());
+        }
     }
 
     @Override
@@ -502,19 +567,183 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterOtros_id(SLParser.Otros_idContext ctx) {
-        if (!error){
+        /*if (!error){
             if (ctx.ID() != null){
                 System.out.print(", " + ctx.ID().getText());
+            }
+        }*/
+        if(!errorSemantico){
+            if(ctx.TK_COMA() != null){
+                System.out.print(",");
+            }
+            if(ctx.ID() != null){
+                System.out.print(ctx.ID().getText());
+                count++;
             }
         }
     }
 
+    public void enterTipo_dato(SLParser.Tipo_datoContext ctx){
+        if(!errorSemantico){
+            if(ctx.VECTOR() != null){
+                System.out.print(" = ");
+                isVector = true;
+            }
+            if(ctx.MATRIZ() != null){
+                System.out.print(" = ");
+                isMatriz = true;
+            }
+            if(!isVector && !isMatriz){
+                System.out.print(" = ");
+                if(ctx.ID() != null){
+                    if(count > 0){
+                        System.out.print(ctx.ID().getText());
+                        while(count > 0){
+                            System.out.print(", " + ctx.ID().getText());
+                            count--;
+                        }
+                    }else{
+                        System.out.print(ctx.ID().getText());
+                    }
+                }else if(ctx.CADENA() != null){
+                    if(count > 0){
+                        System.out.print("\'\'");
+                        while(count > 0){
+                            System.out.print(", \'\'");
+                            count--;
+                        }
+                    }else{
+                        System.out.print("\'\'");
+                    }
+                }else if(ctx.LOGICO() != null){
+                    if(count > 0){
+                        System.out.print("False");
+                        while(count > 0){
+                            System.out.print(", False");
+                            count--;
+                        }
+                    }else{
+                        System.out.print("False");
+                    }
+                }else if(ctx.NUMERICO() != null){
+                    if(count > 0){
+                        System.out.print("0");
+                        while(count > 0){
+                            System.out.print(", 0");
+                            count--;
+                        }
+                    }else{
+                        System.out.print("0");
+                    }
+                }
+            }
+        }
+    }
+    public void exitTipo_dato(SLParser.Tipo_datoContext ctx){
+        if(!errorSemantico){
+            if(isVector){
+                isVector = false;
+            }if(isMatriz){
+                Iterator<String> it = matArgDim.iterator();
+                if(!isNotOpenDim){
+                    while(it.hasNext()){
+                        it.next();
+                        System.out.print("[");
+                    }
+                    while(matDim > 0){
+                        System.out.print("]");
+                        matDim--;
+                    }
+                    matArgDim = new ArrayList<>();
+                }else{
+                    String matClose = "np.empty((";
+                    while(it.hasNext()){
+                        String dim = it.next();
+                        boolean firstCloseDim = false;
+                        if(dim.equals("*")){
+                            System.out.print("[");
+                        }else{
+                            matClose = matClose + dim;
+                            matDim--;
+                            firstCloseDim = true;
+                            if(firstCloseDim && it.hasNext()){
+                                matClose = matClose + ",";
+                            }else{
+                                matClose = matClose + ")";
+                            }
+                        }
+                    }
+                    matClose = matClose + ",object)";
+                    isNotOpenDim = false;
+                    matArgDim = new ArrayList<>();
+                    System.out.print(matClose);
+                    while(matDim > 0){
+                        System.out.print("]");
+                        matDim--;
+                    }
+                }
+                isMatriz = false;
+            }
+        }
+    }
+    @Override
+    public void enterTamano_arreglo(SLParser.Tamano_arregloContext ctx){
+        if(!errorSemantico){
+            if(ctx.TK_MULTIPLICACION() != null){
+                if(isVector){
+                    System.out.print("[]");
+                }else if(isMatriz){
+                    if(!isNotOpenDim){
+                        matArgDim.add(ctx.TK_MULTIPLICACION().getText());
+                        matDim++;
+                    }else{
+                        System.out.println("ERROR SEMANTICO: NO SE ADMITE PARAMETROS ABIERTOS (*) DESPUES DE UN PARAMETRO FIJO");
+                        errorSemantico = true;
+                    }
+                }
+            }else if(ctx.TK_NUMERO() != null){
+                if(isVector){
+                    System.out.print("np.empty(("+ Integer.parseInt(ctx.TK_NUMERO().getText()) + "),object)");
+                }else if(isMatriz){
+                    isNotOpenDim = true;
+                    matDim++;
+                    matArgDim.add(ctx.TK_NUMERO().getText());
+                }
+            }
+        }
+    }
     @Override
     public void enterPunto_y_coma_opcional_subrutina(SLParser.Punto_y_coma_opcional_subrutinaContext ctx) {
         if (!error){
             if (ctx.ID() != null){
                 System.out.print(", " + ctx.ID().getText());
             }
+        }
+    }
+    @Override
+    public void enterPunto_y_coma_opcional(SLParser.Punto_y_coma_opcionalContext ctx){
+        if(ctx.TK_PUNTO_Y_COMA() != null){
+            System.out.print("; ");
+        }else{
+            System.out.println("");
+        }
+    }
+    @Override
+    public void enterSigno(SLParser.SignoContext ctx){
+        if(ctx.TK_RESTA() != null){
+            System.out.print("-");
+        }
+        if(ctx.TK_SUMA() != null){
+            System.out.print("+");
+        }
+    }
+    @Override
+    public void enterVariable_aux(SLParser.Variable_auxContext ctx){
+        if(ctx.ID() != null){
+            System.out.print(ctx.ID().getText());
+        }
+        if(ctx.TK_NUMERO() != null){
+            System.out.print(ctx.TK_NUMERO().getText());
         }
     }
 
