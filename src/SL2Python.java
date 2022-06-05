@@ -157,8 +157,15 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterExpresion(SLParser.ExpresionContext ctx){
-        //System.out.print(ctx.getText());
         inExpresion = true;
+        String [] funciones_predefinidas = {"abs", "arctan", "ascii", "cos", "dec", "eof", "exp", "get_ifs", "inc", "int", "log", "lower", "mem", "ord", "paramval",
+                "pcount", "pos", "random", "sec", "set_stdin", "set_stdout", "sin", "sqrt", "str", "strdup", "strlen", "substr", "tan", "upper", "val"};
+        List<String> funciones_predefinidas_list = new ArrayList<>(Arrays.asList(funciones_predefinidas));
+
+        if(ctx.ID()!=null && funciones_predefinidas_list.contains(ctx.ID().getText())){
+            funcionPredefinida = true;
+            traduceFuncionPredefinidaExpresion(ctx);
+        }
     }
 
     @Override
@@ -201,12 +208,13 @@ public class SL2Python extends SLBaseListener {
     public void enterId_arreglo_registro(SLParser.Id_arreglo_registroContext ctx) {
         //System.out.print(ctx.parent.parent.getChild(0).getText());
     }
+    
+
     @Override
     public void enterSentencia(SLParser.SentenciaContext ctx){
         if (!error){
 
         }
-
         String [] funciones_predefinidas = {"abs", "arctan", "ascii", "cos", "dec", "eof", "exp", "get_ifs", "inc", "int", "log", "lower", "mem", "ord", "paramval",
                 "pcount", "pos", "random", "sec", "set_stdin", "set_stdout", "sin", "sqrt", "str", "strdup", "strlen", "substr", "tan", "upper", "val"};
         List<String> funciones_predefinidas_list = new ArrayList<>(Arrays.asList(funciones_predefinidas));
@@ -217,187 +225,8 @@ public class SL2Python extends SLBaseListener {
             }
         }
         if(ctx.ID()!=null && funciones_predefinidas_list.contains(ctx.ID().getText())){
-            String translatedFunction = "";
-            switch (ctx.ID().getText()){
-                case "abs":
-                    translatedFunction = "abs";
-                    break;
-                case "arctan":
-                    translatedFunction = "math.atan";
-                    break;
-                case "ascii":
-                    translatedFunction = "ascii";
-                    break;
-                case "cos":
-                    translatedFunction = "math.cos";
-                    break;
-                case "dec":
-                    funcionPredefinida = true;
-                    String decN = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
-                    String decA = "1";
-                    if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
-                        decA = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().getText();
-                    }
-                    translatedFunction = "("+decN + "-" + decA+")";
-                    break;
-                case "eof": //https://www.cnc.una.py/sl/SL-stdf.html#eof
-                    //PENDIENTE
-                    break;
-                case "exp":
-                    translatedFunction = "math.exp";
-                    break;
-                case "get_ifs": //https://www.cnc.una.py/sl/SL-stdf.html#get_ifs
-                    //PENDIENTE
-                    break;
-                case "inc": //https://www.cnc.una.py/sl/SL-stdf.html#inc
-                    funcionPredefinida = true;
-                    String incN = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
-                    String incA = "1";
-                    if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
-                        incA = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().getText();
-                    }
-                    translatedFunction = "("+incN + "+" + incA+")";
-                    break;
-                case "int":
-                    translatedFunction = "int";
-                    break;
-                case "log":
-                    translatedFunction = "math.log";
-                    break;
-                case "lower": // https://www.cnc.una.py/sl/SL-stdf.html#lower
-                    funcionPredefinida = true;
-                    translatedFunction = ctx.id_casos().llamada_subrutina().parametros().getText() + ".lower()";
-                    break;
-                case "mem":
-                    funcionPredefinida = true;
-                    translatedFunction = "psutil.virtual_memory().total";
-                    break;
-                case "ord":
-                    translatedFunction = "ord";
-                    break;
-                case "paramval": //https://www.cnc.una.py/sl/SL-stdf.html#paramval
-                    //PENDIENTE
-                    break;
-                case "pcount": //https://www.cnc.una.py/sl/SL-stdf.html#pcount
-                    //PENDIENTE
-                    break;
-                case "pos": //https://www.cnc.una.py/sl/SL-stdf.html#pcount
-                    funcionPredefinida = true;
-                    if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion() != null){
-                        translatedFunction = ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() + ".pos("+ ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText() +", " + ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion().variable().getText() + ")";
-                    }else{
-                        translatedFunction = ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() + ".pos("+ ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText() + ")";
-                    }
-                    break;
-                case "random":
-                    funcionPredefinida = true;
-                    if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
-                        translatedFunction= "random.seed(" + ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText() + ")\nrandom.randrange(0,"+ ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() +" )";
-                    }else{
-                        translatedFunction = "random.randrange(0,"+ ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() +")";
-                    }
-                    break;
-                case "sec":
-                    funcionPredefinida = true;
-                    translatedFunction = "(datetime.datetime.utcnow() - datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)).seconds";
-                    break;
-                case "set_stdin":
-                    funcionPredefinida = true;
-                    translatedFunction = "try:\n" +
-                            "\tfile_opened = open("+ ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() +",\"r\").readlines()\n" +
-                            "except FileNotFoundError:\n" +
-                            "\tprint(False)";
-                    break;
-                case "set_stdout":
-                    funcionPredefinida = true;
-                    String ruta =ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText();
-                    String modo = "w";
-                    if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
-                        switch(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText()){
-                            case "\"at\"":
-                                modo = "\"a\"";
-                                break;
-                            default:
-                                modo = "\"w\"";
-                                break;
-                        } ;
-
-                    }
-                    translatedFunction =
-                            "try:\n" +
-                            "\topen("+ ruta +",\"r\")\n" +
-                            "\tsys.stdout = open("+ ruta +","+ modo +")\n" +
-                            "except FileNotFoundError:\n" +
-                            "\tprint(False)\n" +
-                            "\tsys.stdout = sys.__stdout__";
-                    break;
-                case "sin":
-                    translatedFunction = "math.sin";
-                    break;
-                case "sqrt":
-                    translatedFunction = "math.sqrt";
-                    break;
-               case "str":
-                   funcionPredefinida = true;
-                   String n = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
-                   String a = "0";
-                   String cant_dec = "2";
-                   String r = " ";
-                   if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
-                       a = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText();
-                        if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion() != null){
-                            cant_dec = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion().variable().getText();
-                            if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().mas_parametros().expresion() != null){
-                                r = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().mas_parametros().expresion().variable().getText();
-                                r = r.replace("\"","");
-                                r = r.replace("'","");
-                            }
-                        }
-                    }
-                   String relleno =  r.repeat(Integer.parseInt(a));
-                   String numeroBase =  "str(round("+n+","+cant_dec+"))";
-                   if (cant_dec.equals("0")){
-                       numeroBase = "str(round("+n+"))";
-                   }
-                   translatedFunction = "(\""+relleno +"\""+ "+" +numeroBase+")[-"+a+":]";
-                   break;
-                case "strdup":
-                    funcionPredefinida = true;
-                    String cadena = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
-                    String numeroVeces = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().getText();
-                    translatedFunction = cadena + "*" + numeroVeces;
-                    break;
-                case "strlen":
-                    translatedFunction = "len";
-                    break;
-                case "substr":
-                    funcionPredefinida = true;
-                    String cadenaSubstr = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
-                    String inicio = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().getText();
-                    String cant = "";
-                    if (ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion() != null){
-                        cant = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion().getText();
-                        translatedFunction = cadenaSubstr+"["+inicio+"-1: "+inicio+"-1+" + cant +"]";
-                    }else{
-                        translatedFunction = cadenaSubstr+"["+inicio+"-1:]";
-                    }
-                    break;
-                case "tan":
-                    translatedFunction = "math.tan";
-                    break;
-                case "upper":
-                    funcionPredefinida = true;
-                    translatedFunction = ctx.id_casos().llamada_subrutina().parametros().getText() + ".upper()";
-                    break;
-                case "val":
-                    funcionPredefinida = true;
-                    translatedFunction ="try:\n" +
-                            "\tfloat(" +ctx.id_casos().llamada_subrutina().parametros().expresion().getText()+")\n" +
-                            "except ValueError:\n" +
-                            "\t0";
-                    break;
-            }
-            System.out.print(translatedFunction);
+            funcionPredefinida = true;
+            traduceFuncionPredefinidaSentencia(ctx);
         }
         System.out.print("\t".repeat(numTabs));
     }
@@ -502,7 +331,7 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterOtros_id(SLParser.Otros_idContext ctx) {
-        if (!error){
+        if (!error && !inDeclaracion){
             if (ctx.ID() != null){
                 System.out.print(", " + ctx.ID().getText());
             }
@@ -582,4 +411,348 @@ public class SL2Python extends SLBaseListener {
     public void visitErrorNode(ErrorNode node) {
         error = true;
     }
+    public void traduceFuncionPredefinidaExpresion(SLParser.ExpresionContext ctx){
+        String translatedFunction = "";
+        String funcion = ctx.ID().getText();
+        String parentesisYParametros = ctx.valor_aux().getText();
+        switch (funcion){
+            case "abs":
+                translatedFunction = "abs"+ parentesisYParametros;
+                break;
+            case "arctan":
+                translatedFunction = "math.atan"+ parentesisYParametros;
+                break;
+            case "ascii":
+                translatedFunction = "ascii"+ parentesisYParametros;
+                break;
+            case "cos":
+                translatedFunction = "math.cos"+ parentesisYParametros;
+                break;
+            case "dec":
+                String decN = ctx.valor_aux().llamada_subrutina().parametros().expresion().getText();
+                String decA = "1";
+                if(ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    decA = ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion().getText();
+                }
+                translatedFunction = "("+decN + "-" + decA+")";
+                break;
+            case "eof": //https://www.cnc.una.py/sl/SL-stdf.html#eof
+                //PENDIENTE
+                break;
+            case "exp":
+                translatedFunction = "math.exp"+ parentesisYParametros;
+                break;
+            case "get_ifs": //https://www.cnc.una.py/sl/SL-stdf.html#get_ifs
+                //PENDIENTE
+                break;
+            case "inc": //https://www.cnc.una.py/sl/SL-stdf.html#inc
+                String incN = ctx.valor_aux().llamada_subrutina().parametros().expresion().getText();
+                String incA = "1";
+                if(ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    incA = ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion().getText();
+                }
+                translatedFunction = "("+incN + "+" + incA+")";
+                break;
+            case "int":
+                translatedFunction = "int"+ parentesisYParametros;
+                break;
+            case "log":
+                translatedFunction = "math.log"+ parentesisYParametros;
+                break;
+            case "lower": // https://www.cnc.una.py/sl/SL-stdf.html#lower
+                translatedFunction = ctx.valor_aux().llamada_subrutina().parametros().getText() + ".lower()";
+                break;
+            case "mem":
+                translatedFunction = "psutil.virtual_memory().total";
+                break;
+            case "ord":
+                translatedFunction = "ord"+ parentesisYParametros;
+                break;
+            case "paramval": //https://www.cnc.una.py/sl/SL-stdf.html#paramval
+                //PENDIENTE
+                break;
+            case "pcount": //https://www.cnc.una.py/sl/SL-stdf.html#pcount
+                //PENDIENTE
+                break;
+            case "pos": //https://www.cnc.una.py/sl/SL-stdf.html#pcount
+                if(ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion() != null){
+                    translatedFunction = ctx.valor_aux().llamada_subrutina().parametros().expresion().variable().getText() + ".pos("+ ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText() +", " + ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion().variable().getText() + ")";
+                }else{
+                    translatedFunction = ctx.valor_aux().llamada_subrutina().parametros().expresion().variable().getText() + ".pos("+ ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText() + ")";
+                }
+                break;
+            case "random":
+                if(ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    translatedFunction= "random.seed(" + ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText() + ")\nrandom.randrange(0,"+ ctx.valor_aux().llamada_subrutina().parametros().expresion().variable().getText() +" )";
+                }else{
+                    translatedFunction = "random.randrange(0,"+ ctx.valor_aux().llamada_subrutina().parametros().expresion().variable().getText() +")";
+                }
+                break;
+            case "sec":
+                translatedFunction = "(datetime.datetime.utcnow() - datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)).seconds";
+                break;
+            case "set_stdin":
+                translatedFunction = "try:\n" +
+                        "\tfile_opened = open("+ ctx.valor_aux().llamada_subrutina().parametros().expresion().variable().getText() +",\"r\").readlines()\n" +
+                        "except FileNotFoundError:\n" +
+                        "\tprint(False)";
+                break;
+            case "set_stdout":
+                String ruta =ctx.valor_aux().llamada_subrutina().parametros().expresion().variable().getText();
+                String modo = "w";
+                if(ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    switch(ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText()){
+                        case "\"at\"":
+                            modo = "\"a\"";
+                            break;
+                        default:
+                            modo = "\"w\"";
+                            break;
+                    } ;
+
+                }
+                translatedFunction =
+                        "try:\n" +
+                                "\topen("+ ruta +",\"r\")\n" +
+                                "\tsys.stdout = open("+ ruta +","+ modo +")\n" +
+                                "except FileNotFoundError:\n" +
+                                "\tprint(False)\n" +
+                                "\tsys.stdout = sys.__stdout__";
+                break;
+            case "sin":
+                translatedFunction = "math.sin"+ parentesisYParametros;
+                break;
+            case "sqrt":
+                translatedFunction = "math.sqrt"+ parentesisYParametros;
+                break;
+            case "str":
+                String n = ctx.valor_aux().llamada_subrutina().parametros().expresion().getText();
+                String a = "0";
+                String cant_dec = "2";
+                String r = " ";
+                if(ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    a = ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText();
+                    if(ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion() != null){
+                        cant_dec = ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion().variable().getText();
+                        if(ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().mas_parametros().mas_parametros().expresion() != null){
+                            r = ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().mas_parametros().mas_parametros().expresion().variable().getText();
+                            r = r.replace("\"","");
+                            r = r.replace("'","");
+                        }
+                    }
+                }
+                String relleno =  r.repeat(Integer.parseInt(a));
+                String numeroBase =  "str(round("+n+","+cant_dec+"))";
+                if (cant_dec.equals("0")){
+                    numeroBase = "str(round("+n+"))";
+                }
+                translatedFunction = "(\""+relleno +"\""+ "+" +numeroBase+")[-"+a+":]";
+                break;
+            case "strdup":
+                String cadena = ctx.valor_aux().llamada_subrutina().parametros().expresion().getText();
+                String numeroVeces = ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion().getText();
+                translatedFunction = cadena + "*" + numeroVeces;
+                break;
+            case "strlen":
+                translatedFunction = "len"+ parentesisYParametros;
+                break;
+            case "substr":
+                String cadenaSubstr = ctx.valor_aux().llamada_subrutina().parametros().expresion().getText();
+                String inicio = ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().expresion().getText();
+                String cant = "";
+                if (ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion() != null){
+                    cant = ctx.valor_aux().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion().getText();
+                    translatedFunction = cadenaSubstr+"["+inicio+"-1: "+inicio+"-1+" + cant +"]";
+                }else{
+                    translatedFunction = cadenaSubstr+"["+inicio+"-1:]";
+                }
+                break;
+            case "tan":
+                translatedFunction = "math.tan"+ parentesisYParametros;
+                break;
+            case "upper":
+                translatedFunction = ctx.valor_aux().llamada_subrutina().parametros().getText() + ".upper()";
+                break;
+            case "val":
+                translatedFunction ="try:\n" +
+                        "\tfloat(" +ctx.valor_aux().llamada_subrutina().parametros().expresion().getText()+")\n" +
+                        "except ValueError:\n" +
+                        "\t0";
+                break;
+        }
+        System.out.print(translatedFunction);
+    }
+
+    public void traduceFuncionPredefinidaSentencia(SLParser.SentenciaContext ctx){
+        String translatedFunction = "";
+        String funcion = ctx.ID().getText();
+        String parentesisYParametros = ctx.id_casos().getText();
+        switch (funcion){
+            case "abs":
+                translatedFunction = "abs"+ parentesisYParametros;
+                break;
+            case "arctan":
+                translatedFunction = "math.atan"+ parentesisYParametros;
+                break;
+            case "ascii":
+                translatedFunction = "ascii"+ parentesisYParametros;
+                break;
+            case "cos":
+                translatedFunction = "math.cos"+ parentesisYParametros;
+                break;
+            case "dec":
+                String decN = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
+                String decA = "1";
+                if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    decA = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().getText();
+                }
+                translatedFunction = "("+decN + "-" + decA+")";
+                break;
+            case "eof": //https://www.cnc.una.py/sl/SL-stdf.html#eof
+                //PENDIENTE
+                break;
+            case "exp":
+                translatedFunction = "math.exp"+ parentesisYParametros;
+                break;
+            case "get_ifs": //https://www.cnc.una.py/sl/SL-stdf.html#get_ifs
+                //PENDIENTE
+                break;
+            case "inc": //https://www.cnc.una.py/sl/SL-stdf.html#inc
+                String incN = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
+                String incA = "1";
+                if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    incA = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().getText();
+                }
+                translatedFunction = "("+incN + "+" + incA+")";
+                break;
+            case "int":
+                translatedFunction = "int"+ parentesisYParametros;
+                break;
+            case "log":
+                translatedFunction = "math.log"+ parentesisYParametros;
+                break;
+            case "lower": // https://www.cnc.una.py/sl/SL-stdf.html#lower
+                translatedFunction = ctx.id_casos().llamada_subrutina().parametros().getText() + ".lower()";
+                break;
+            case "mem":
+                translatedFunction = "psutil.virtual_memory().total";
+                break;
+            case "ord":
+                translatedFunction = "ord"+ parentesisYParametros;
+                break;
+            case "paramval": //https://www.cnc.una.py/sl/SL-stdf.html#paramval
+                //PENDIENTE
+                break;
+            case "pcount": //https://www.cnc.una.py/sl/SL-stdf.html#pcount
+                //PENDIENTE
+                break;
+            case "pos": //https://www.cnc.una.py/sl/SL-stdf.html#pcount
+                if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion() != null){
+                    translatedFunction = ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() + ".pos("+ ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText() +", " + ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion().variable().getText() + ")";
+                }else{
+                    translatedFunction = ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() + ".pos("+ ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText() + ")";
+                }
+                break;
+            case "random":
+                if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    translatedFunction= "random.seed(" + ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText() + ")\nrandom.randrange(0,"+ ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() +" )";
+                }else{
+                    translatedFunction = "random.randrange(0,"+ ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() +")";
+                }
+                break;
+            case "sec":
+                translatedFunction = "(datetime.datetime.utcnow() - datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)).seconds";
+                break;
+            case "set_stdin":
+                translatedFunction = "try:\n" +
+                        "\tfile_opened = open("+ ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText() +",\"r\").readlines()\n" +
+                        "except FileNotFoundError:\n" +
+                        "\tprint(False)";
+                break;
+            case "set_stdout":
+                String ruta =ctx.id_casos().llamada_subrutina().parametros().expresion().variable().getText();
+                String modo = "w";
+                if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    switch(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText()){
+                        case "\"at\"":
+                            modo = "\"a\"";
+                            break;
+                        default:
+                            modo = "\"w\"";
+                            break;
+                    } ;
+
+                }
+                translatedFunction =
+                        "try:\n" +
+                                "\topen("+ ruta +",\"r\")\n" +
+                                "\tsys.stdout = open("+ ruta +","+ modo +")\n" +
+                                "except FileNotFoundError:\n" +
+                                "\tprint(False)\n" +
+                                "\tsys.stdout = sys.__stdout__";
+                break;
+            case "sin":
+                translatedFunction = "math.sin"+ parentesisYParametros;
+                break;
+            case "sqrt":
+                translatedFunction = "math.sqrt"+ parentesisYParametros;
+                break;
+            case "str":
+                String n = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
+                String a = "0";
+                String cant_dec = "2";
+                String r = " ";
+                if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion() != null){
+                    a = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().variable().getText();
+                    if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion() != null){
+                        cant_dec = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion().variable().getText();
+                        if(ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().mas_parametros().expresion() != null){
+                            r = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().mas_parametros().expresion().variable().getText();
+                            r = r.replace("\"","");
+                            r = r.replace("'","");
+                        }
+                    }
+                }
+                String relleno =  r.repeat(Integer.parseInt(a));
+                String numeroBase =  "str(round("+n+","+cant_dec+"))";
+                if (cant_dec.equals("0")){
+                    numeroBase = "str(round("+n+"))";
+                }
+                translatedFunction = "(\""+relleno +"\""+ "+" +numeroBase+")[-"+a+":]";
+                break;
+            case "strdup":
+                String cadena = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
+                String numeroVeces = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().getText();
+                translatedFunction = cadena + "*" + numeroVeces;
+                break;
+            case "strlen":
+                translatedFunction = "len"+ parentesisYParametros;
+                break;
+            case "substr":
+                String cadenaSubstr = ctx.id_casos().llamada_subrutina().parametros().expresion().getText();
+                String inicio = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().expresion().getText();
+                String cant = "";
+                if (ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion() != null){
+                    cant = ctx.id_casos().llamada_subrutina().parametros().mas_parametros().mas_parametros().expresion().getText();
+                    translatedFunction = cadenaSubstr+"["+inicio+"-1: "+inicio+"-1+" + cant +"]";
+                }else{
+                    translatedFunction = cadenaSubstr+"["+inicio+"-1:]";
+                }
+                break;
+            case "tan":
+                translatedFunction = "math.tan"+ parentesisYParametros;
+                break;
+            case "upper":
+                translatedFunction = ctx.id_casos().llamada_subrutina().parametros().getText() + ".upper()";
+                break;
+            case "val":
+                translatedFunction ="try:\n" +
+                        "\tfloat(" +ctx.id_casos().llamada_subrutina().parametros().expresion().getText()+")\n" +
+                        "except ValueError:\n" +
+                        "\t0";
+                break;
+        }
+        System.out.print(translatedFunction);
+    }
+
 }
