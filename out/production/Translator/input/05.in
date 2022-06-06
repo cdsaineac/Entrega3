@@ -1,8 +1,37 @@
+/*
+OBJETIVO: Calcular e imprimir la suma de los primeros n
+numeros enteros. Muestra el uso de subrutinas.
+AUTOR: jsegovia
+*/
+var
+  tot : numerico
+  n : numerico
+inicio
+  imprimir_explicacion()
+  imprimir ("Numero entero? ")
+  n = 100 // Omitimos leer (n)
+  calcular_suma (n)
+  imprimir ("\nLa suma de los primeros ", n, "números enteros es ", tot)
+fin
+
+/* continuación del programa ejemplo_llamada_subrutinas */
+subrutina imprimir_explicacion()
+inicio
+  imprimir ("\nEste programa de ejemplo calcula la suma de los enteros",
+            "\npositivos comprendidos entre 1 y un valor ",
+            "que se ingresa\n")
+fin
+
+subrutina calcular_suma (entero_tope : numerico)
+/*
+Ejemplo de subrutina que recibe un parametro.
+*/
 var
 k : numerico
 inicio
-desde k=10 hasta 1 paso -1
-{
-imprimir ("\n", k, " :\t", k^2)
-}
+  tot = 0
+  desde k = 1 hasta entero_tope
+  {
+    tot = tot + k
+  }
 fin

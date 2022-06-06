@@ -8,12 +8,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static java.lang.String.valueOf;
-
 public class SL2Python extends SLBaseListener {
 
     public boolean inFor = false;
-    public boolean inLlamadaSubrutina = false;
     public boolean inAsignacion = false;
     public boolean inMasParametros = false;
     public boolean inExpresion = false;
@@ -24,8 +21,6 @@ public class SL2Python extends SLBaseListener {
 
     public boolean inDeclaracion = false;
 
-    public boolean inSubrutina_ = false;
-
     public boolean inIDArregloRegistro = false;
 
     public boolean cicloDesdeHaciaAdelante = true;
@@ -33,23 +28,38 @@ public class SL2Python extends SLBaseListener {
     public boolean funcionPredefinida = false;
     public boolean error = false;
 
+    public boolean inSentencia_retorna_subrutina = false;
+
     public int numTabs = 0;
 
     public String sameTerminals[] = {"(", ")", "[", "]"};
 
+    public ArrayList<String> mainArray = new ArrayList<String>();
+    public ArrayList<String> subrutinasArray = new ArrayList<String>();
+    public boolean intoMainArray = true;
+
     @Override
     public void enterCodigo(SLParser.CodigoContext ctx) {
-        System.out.println("import math");
-        System.out.println("import psutil");
-        System.out.println("import random");
-        System.out.println("import datetime");
-        System.out.println("import sys");
+        System.out.print("import math\n");
+        System.out.print("import psutil\n");
+        System.out.print("import random\n");
+        System.out.print("import datetime\n");
+        System.out.print("import sys\n");
+    }
 
+    @Override
+    public void exitCodigo(SLParser.CodigoContext ctx) {
+        for (int i = 0; i < subrutinasArray.size(); i++) {
+            System.out.print(subrutinasArray.get(i));
+        }
+        for (int i = 0; i < mainArray.size(); i++) {
+            System.out.print(mainArray.get(i));
+        }
     }
 
     @Override
     public void enterCondicional(SLParser.CondicionalContext ctx){
-        System.out.print("if(");
+        addToArray("if(");
     }
 
     @Override
@@ -60,13 +70,13 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void exitCondicional_condicion(SLParser.Condicional_condicionContext ctx) {
-        System.out.print("):\n");
+        addToArray("):\n");
         numTabs++;
     }
 
     @Override
     public void enterCiclo_mientras(SLParser.Ciclo_mientrasContext ctx){
-        System.out.print("while(");
+        addToArray("while(");
     }
 
     @Override
@@ -76,18 +86,18 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void exitCiclo_mientras_condicion(SLParser.Ciclo_mientras_condicionContext ctx){
-        System.out.print("):\n");
+        addToArray("):\n");
         numTabs++;
     }
 
     @Override
     public void enterSentencia_eval_caso(SLParser.Sentencia_eval_casoContext ctx) {
-        System.out.print("if(");
+        addToArray("if(");
     }
 
     @Override
     public void exitSentencia_eval_caso(SLParser.Sentencia_eval_casoContext ctx) {
-        System.out.print("):\n");
+        addToArray("):\n");
         numTabs++;
     }
 
@@ -95,9 +105,9 @@ public class SL2Python extends SLBaseListener {
     public void enterMas_casos_eval(SLParser.Mas_casos_evalContext ctx) {
         numTabs--;
         if(ctx.sentencia_eval_caso() != null) {
-            System.out.print("el");
+            addToArray("el");
         } else if (ctx.SINO() != null) {
-            System.out.println("else:");
+            addToArray("else:\n");
             numTabs++;
         }
 
@@ -117,7 +127,7 @@ public class SL2Python extends SLBaseListener {
                 cicloDesdeHaciaAdelante = false;
             }
         }
-        System.out.print("for ");
+        addToArray("for ");
         inFor = true;
     }
 
@@ -128,39 +138,39 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterCiclo_desde_inicio(SLParser.Ciclo_desde_inicioContext ctx) {
-        System.out.print(ctx.ID());
-        System.out.print(" in range(");
+        addToArray(ctx.ID().getText());
+        addToArray(" in range(");
     }
 
     @Override
     public void exitCiclo_desde_inicio(SLParser.Ciclo_desde_inicioContext ctx) {
-        System.out.print(",");
+        addToArray(",");
     }
     @Override
     public void exitCiclo_desde_fin(SLParser.Ciclo_desde_finContext ctx) {
         if(cicloDesdeHaciaAdelante){
-            System.out.print("+1");
+            addToArray("+1");
         }else{
-            System.out.print("-1");
+            addToArray("-1");
         }
     }
 
     @Override
     public void enterPaso_opt(SLParser.Paso_optContext ctx) {
         if(ctx.PASO() != null){
-            System.out.print(",");
+            addToArray(",");
         }
     }
 
     @Override
     public void exitPaso_opt(SLParser.Paso_optContext ctx) {
-        System.out.print("):\n");
+        addToArray("):\n");
         numTabs++;
     }
 
     @Override
     public void enterCiclo_repetir(SLParser.Ciclo_repetirContext ctx) {
-        System.out.print("while True:\n");
+        addToArray("while True:\n");
         numTabs++;
     }
 
@@ -171,12 +181,12 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterCiclo_repetir_condicion(SLParser.Ciclo_repetir_condicionContext ctx) {
-        System.out.print("\tif(");
+        addToArray("\tif(");
     }
 
     @Override
     public void exitCiclo_repetir_condicion(SLParser.Ciclo_repetir_condicionContext ctx) {
-        System.out.print("): break\n");
+        addToArray("): break\n");
 
     }
 
@@ -201,22 +211,32 @@ public class SL2Python extends SLBaseListener {
     @Override
     public void enterSentencia_interna(SLParser.Sentencia_internaContext ctx){
         String temp = String.join("", Collections.nCopies(numTabs, "\t"));
-        System.out.print(temp);
-        //System.out.print("\t".repeat(numTabs));
+        addToArray(temp);
+    }
+    @Override
+    public  void enterSentencia_retorna_subrutina(SLParser.Sentencia_retorna_subrutinaContext ctx){
+        inSentencia_retorna_subrutina = true;
+    }
+    @Override
+    public  void exitSentencia_retorna_subrutina(SLParser.Sentencia_retorna_subrutinaContext ctx){
+        inSentencia_retorna_subrutina = false;
     }
 
-
+    @Override
+    public void exitSentencia_retorna_main(SLParser.Sentencia_retorna_mainContext ctx) {
+        addToArray("\n");
+    }
 
     @Override
     public void exitSentencia_interna(SLParser.Sentencia_internaContext ctx){
-        System.out.print("\n");
+        addToArray("\n");
     }
     @Override
     public void exitSentencia(SLParser.SentenciaContext ctx){
         if (!error){
 
         }
-        System.out.print("\n");
+        addToArray("\n");
     }
 
     @Override
@@ -225,7 +245,7 @@ public class SL2Python extends SLBaseListener {
 
         }
         inAsignacion = true;
-        System.out.print(ctx.parent.parent.getChild(0).getText());
+        addToArray(ctx.parent.parent.getChild(0).getText());
     }
 
     @Override
@@ -248,7 +268,7 @@ public class SL2Python extends SLBaseListener {
 
         if (ctx.ID() != null && ctx.id_casos().llamada_subrutina() != null && !funciones_predefinidas_list.contains(ctx.ID().getText())){
             if (ctx.ID().getText().compareTo("imprimir") != 0 && ctx.ID().getText().compareTo("leer") != 0){
-                System.out.print(ctx.ID().getText());
+                addToArray(ctx.ID().getText());
             }
         }
         if(ctx.ID()!=null && funciones_predefinidas_list.contains(ctx.ID().getText())){
@@ -256,8 +276,7 @@ public class SL2Python extends SLBaseListener {
             traduceFuncionPredefinidaSentencia(ctx);
         }
         String temp = String.join("", Collections.nCopies(numTabs, "\t"));
-        System.out.print(temp);
-        //System.out.print("\t".repeat(numTabs));
+        addToArray(temp);
     }
     @Override
     public void exitAsignacion(SLParser.AsignacionContext ctx) {
@@ -300,7 +319,7 @@ public class SL2Python extends SLBaseListener {
         if (!error){
 
         }
-        System.out.print("\n");
+        addToArray("\n");
         inConstDeclaracion = false;
     }
 
@@ -326,17 +345,23 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterSubrutina_(SLParser.Subrutina_Context ctx) {
+        intoMainArray = false;
         if (!error){
             if (ctx.ID() != null) {
-                System.out.print("def " + ctx.ID().getText());
+                addToArray("def " + ctx.ID().getText());
             }
         }
     }
 
     @Override
+    public void exitSubrutina_(SLParser.Subrutina_Context ctx) {
+        intoMainArray = true;
+    }
+
+    @Override
     public void enterMain_subrutina(SLParser.Main_subrutinaContext ctx) {
         if (!error){
-            System.out.print(":\n");
+            addToArray(":\n");
             numTabs++;
         }
     }
@@ -344,7 +369,7 @@ public class SL2Python extends SLBaseListener {
     @Override
     public void exitMain_subrutina(SLParser.Main_subrutinaContext ctx) {
         if (!error){
-            System.out.println();
+            addToArray("\n");
             numTabs--;
         }
     }
@@ -353,7 +378,7 @@ public class SL2Python extends SLBaseListener {
     public void enterParam_subrutina(SLParser.Param_subrutinaContext ctx) {
         if (!error){
             if (ctx.ID() != null){
-                System.out.print(ctx.ID().getText());
+                addToArray(ctx.ID().getText());
             }
         }
     }
@@ -362,7 +387,7 @@ public class SL2Python extends SLBaseListener {
     public void enterOtros_id(SLParser.Otros_idContext ctx) {
         if (!error && !inDeclaracion){
             if (ctx.ID() != null){
-                System.out.print(", " + ctx.ID().getText());
+                addToArray(", " + ctx.ID().getText());
             }
         }
     }
@@ -371,7 +396,7 @@ public class SL2Python extends SLBaseListener {
     public void enterPunto_y_coma_opcional_subrutina(SLParser.Punto_y_coma_opcional_subrutinaContext ctx) {
         if (!error){
             if (ctx.ID() != null){
-                System.out.print(", " + ctx.ID().getText());
+                addToArray(", " + ctx.ID().getText());
             }
         }
     }
@@ -379,64 +404,55 @@ public class SL2Python extends SLBaseListener {
     @Override
     public void visitTerminal(TerminalNode node) {
         if (!error){
-            //System.out.println(node.getText());
-            if (inDeclaracion){
+            if (inDeclaracion || inSentencia_retorna_subrutina){
                 // SKIP :)
             }else if (node.getText().equals("leer")) {
                 inLeer = true;
             } else if (inLeer) {
                 if(inParametros && inExpresion){
-                    System.out.print(node.getParent().getText() + " = input()\n");
+                    addToArray(node.getParent().getText() + " = input()\n");
                     inParametros = false;
                 } else if (inMasParametros) {
                     inParametros = true;
                 }
             } else if (node.getText().equals("imprimir")) {
-                System.out.print("print");
+                addToArray("print");
             } else if(Arrays.asList(sameTerminals).contains(node.getText())){
                 if(funcionPredefinida){
                     if(node.getText().equals(")") ){
                         funcionPredefinida = false;
                     }
                 }else{
-                   System.out.print(node.getText());
+                   addToArray(node.getText());
                 }
             } else if(node.getText().equals("^")) {
-                System.out.print("**");
+                addToArray("**");
             } else if (node.getText().equals("<>")) {
-                System.out.print("!=");
+                addToArray("!=");
             } else if (inMasParametros && node.getText().equals(",")) {
                 if(funcionPredefinida){
                     //print nothing
                 }else{
-                    System.out.print(",");
+                    addToArray(",");
                 }
             } else if (inExpresion && node.getText().equals("{")) {
-                System.out.print("[");
+                addToArray("[");
             } else if (inExpresion && node.getText().equals("}")) {
-                System.out.print("]");
-            } else if(node.getText().equals("and") || node.getText().equals("or") || node.getText().equals("not")){
-                System.out.print(" " + node.getText() + " ");
+                addToArray("]");
+            } else if(node.getText().equals("and") || node.getText().equals("or") || node.getText().equals("not")) {
+                addToArray(" " + node.getText() + " ");
+            } else if (node.getText().equals("retorna")){
+                addToArray("\treturn ");
             } else if ((inExpresion || inAsignacion || inConstDeclaracion)) {
                 if (!funcionPredefinida){
                     if(inIDArregloRegistro){
-                        System.out.print(node.getText() + "-1");
+                        addToArray(node.getText() + "-1");
                     }else{
-                        System.out.print(node.getText());
+                        addToArray(node.getText());
                     }
                 }
             } else {
-                //System.out.println("\n###\nNOTHING "+node.getText()+"\n###\n");
             }
-
-
-            //else if(inAsignacion){
-            //   System.out.print(node.getText());
-            //}
-
-            // System.out.println(" ");
-            // System.out.print(node);
-            // System.out.println(node.getSymbol());
         }
     }
 
@@ -614,7 +630,7 @@ public class SL2Python extends SLBaseListener {
                         "\t0";
                 break;
         }
-        System.out.print(translatedFunction);
+        addToArray(translatedFunction);
     }
 
     public void traduceFuncionPredefinidaSentencia(SLParser.SentenciaContext ctx){
@@ -787,7 +803,15 @@ public class SL2Python extends SLBaseListener {
                         "\t0";
                 break;
         }
-        System.out.print(translatedFunction);
+        addToArray(translatedFunction);
+    }
+
+    public void addToArray(String cadena){
+        if (intoMainArray){
+            mainArray.add(cadena);
+        }else{
+            subrutinasArray.add(cadena);
+        }
     }
 
 }
