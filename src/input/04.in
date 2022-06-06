@@ -1,66 +1,30 @@
-var
-  tot : numerico
-  n : numerico
-inicio
-  cls()
-  imprimir_explicacion()
-  imprimir ("Numero entero? ")
-  leer (n)
-  calcular_suma (n)
-  imprimir ("\nLa suma de los primeros ", n, "números enteros es ", tot)
-fin
-
-/* continuación del programa ejemplo_llamada_subrutinas */
-subrutina imprimir_explicacion()
-inicio
-  imprimir ("\nEste programa de ejemplo calcula la suma de los enteros",
-            "\npositivos comprendidos entre 1 y un valor ",
-            "que se ingresa\n")
-fin
-
-subrutina calcular_suma (entero_tope : numerico)
 /*
-  Ejemplo de subrutina que recibe un parametro.
+OBJETIVO: Clasificar un carácter ingresado por el usuario en
+letra mayúscula, letra minúscula, dígito o algún otro.
+AUTOR: jsegovia
 */
 var
-  k : numerico
-  inicio
-  tot = 0
-  desde k = 1 hasta entero_tope
-  {
-    tot = tot + k
-  }
-fin
-
-subrutina entero (n : numerico) retorna numerico
-var
-  ent : numerico
+  let : cadena
+  msg : cadena
 inicio
-  ent = 0
-  mientras ( n >= 1 )
-  {
-    ent = ent + 1
-    n = n - 1
-  }
-  retorna ( ent )
-fin
-
-subrutina mi_sub (a : numerico; ref b : numerico)
+  let = '5Z' // Omitimos leer (let)
 /*
-  a se recibe por valor, pero b por referencia.
+Consideremos solo el primer carácter, por si haya tipeado
+más de uno.
+Observar cómo se usan los corchetes para seleccionar el
+primer carácter.
 */
-inicio
-  a = 5
-  b = b * 5
-  imprimir ( "\n", a, " ", b)
-fin
-
-subrutina impr_vect (v : vector [*] numerico)
-var
-  k : numerico
-inicio
-  desde k=1 hasta alen (v)
+  let = let [1]
+  eval
   {
-    imprimir (v [k], " ")
+    caso ( let >= 'A' and let <= 'Z' )
+      msg = "letra mayúscula"
+    caso ( let >= 'a' and let <= 'z' )
+      msg = "letra minúscula"
+    caso ( let >= '0' and let <= '9' )
+      msg = "dígito"
+    sino
+      msg = "algún otro"
   }
+  imprimir ("\nEl carácter que usted ingresó es ", msg)
 fin

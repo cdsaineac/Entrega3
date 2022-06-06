@@ -25,6 +25,10 @@ public class SL2Python extends SLBaseListener {
 
     public boolean inSubrutina_ = false;
 
+    public boolean inIDArregloRegistro = false;
+
+    public boolean cicloDesdeHaciaAdelante = true;
+
     public boolean funcionPredefinida = false;
     public boolean error = false;
 
@@ -97,9 +101,21 @@ public class SL2Python extends SLBaseListener {
         }
 
     }
+    @Override
+    public void exitSentencia_eval(SLParser.Sentencia_evalContext ctx){
+        numTabs--;
+    }
 
     @Override
     public void enterCiclo_desde(SLParser.Ciclo_desdeContext ctx){
+        if(ctx.paso_opt().expresion() != null){
+            int paso = Integer.parseInt(ctx.paso_opt().expresion().getText());
+            if(paso>=0){
+                cicloDesdeHaciaAdelante = true;
+            }else{
+                cicloDesdeHaciaAdelante = false;
+            }
+        }
         System.out.print("for ");
         inFor = true;
     }
@@ -118,6 +134,14 @@ public class SL2Python extends SLBaseListener {
     @Override
     public void exitCiclo_desde_inicio(SLParser.Ciclo_desde_inicioContext ctx) {
         System.out.print(",");
+    }
+    @Override
+    public void exitCiclo_desde_fin(SLParser.Ciclo_desde_finContext ctx) {
+        if(cicloDesdeHaciaAdelante){
+            System.out.print("+1");
+        }else{
+            System.out.print("-1");
+        }
     }
 
     @Override
@@ -146,7 +170,7 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterCiclo_repetir_condicion(SLParser.Ciclo_repetir_condicionContext ctx) {
-        System.out.print("if(");
+        System.out.print("\tif(");
     }
 
     @Override
@@ -206,9 +230,12 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterId_arreglo_registro(SLParser.Id_arreglo_registroContext ctx) {
-        //System.out.print(ctx.parent.parent.getChild(0).getText());
+        inIDArregloRegistro = true;
     }
-    
+    @Override
+    public void exitId_arreglo_registro(SLParser.Id_arreglo_registroContext ctx) {
+        inIDArregloRegistro = false;
+    }
 
     @Override
     public void enterSentencia(SLParser.SentenciaContext ctx){
@@ -387,10 +414,14 @@ public class SL2Python extends SLBaseListener {
             } else if (inExpresion && node.getText().equals("}")) {
                 System.out.print("]");
             } else if(node.getText().equals("and") || node.getText().equals("or") || node.getText().equals("not")){
-                System.out.print(node.getText() + " ");
+                System.out.print(" " + node.getText() + " ");
             } else if ((inExpresion || inAsignacion || inConstDeclaracion)) {
                 if (!funcionPredefinida){
-                    System.out.print(node.getText());
+                    if(inIDArregloRegistro){
+                        System.out.print(node.getText() + "-1");
+                    }else{
+                        System.out.print(node.getText());
+                    }
                 }
             } else {
                 //System.out.println("\n###\nNOTHING "+node.getText()+"\n###\n");

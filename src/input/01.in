@@ -14,7 +14,7 @@ var
 inicio
   imprimir ("\nSuma de numeros pares entre 1 y n.\nPor favor ",
             "ingrese un valor para n: ")
-  leer (n)
+  n = 20 // Omitimos el leer(n)
   suma = 0
   desde k=2 hasta n paso 2  // Comentario ciclo desde ... hasta
   {
