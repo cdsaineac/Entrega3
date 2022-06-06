@@ -1,13 +1,48 @@
-programa declaraciones_3
-
+programa alfil
+const
+TAM_TAB = 8
 var
-  n, suma, k:  numerico
-  var
-  A : matriz [100, 10 numerico
-  v_disp, // Velocidad inicial
-  a_disp : numerico // Angulo de disparo
-  a_disp_rad : numerico; // Igual que a_disp pero en radianes
-  h_max : numerico // Altura maxima
+f_inic, c_inic : numerico
+T : matriz [TAM_TAB,TAM_TAB] cadena
+var
+k : numerico
 inicio
-  imprimir ("Hola, aquí solo se hacen declaraciones de variables")
+imprimir("\nIngrese fila y columna donde se encuentra el alfil:")
+f_inic = 1
+c_inic = 6 // Omitimos leer (f_inic, c_inic)
+T [f_inic, c_inic] = 'A'
+k = 1
+mientras ( k <= TAM_TAB )
+{
+marcar (f_inic - k, c_inic - k)
+marcar (f_inic - k, c_inic + k)
+marcar (f_inic + k, c_inic - k)
+marcar (f_inic + k, c_inic + k)
+k = k + 1
+}
+impr_tablero()
+fin
+
+subrutina marcar (f, c : numerico)
+inicio
+si ( (f > 0 and f <= TAM_TAB) and
+(c > 0 and c <= TAM_TAB)
+)
+{
+T [f, c] = 'P'
+}
+fin
+
+subrutina impr_tablero()
+var
+f, c : numerico
+inicio
+desde f = 1 hasta TAM_TAB
+{
+imprimir ("\n")
+desde c = 1 hasta TAM_TAB
+{
+imprimir ( T [f, c], ' ')
+}
+}
 fin

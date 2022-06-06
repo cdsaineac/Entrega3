@@ -574,7 +574,8 @@ public class SL2Python extends SLBaseListener {
                         }
                     }
                 }
-                String relleno =  r.repeat(Integer.parseInt(a));
+                String relleno = String.join("", Collections.nCopies(Integer.parseInt(a), r));
+                //String relleno =  r.repeat(Integer.parseInt(a));
                 String numeroBase =  "str(round("+n+","+cant_dec+"))";
                 if (cant_dec.equals("0")){
                     numeroBase = "str(round("+n+"))";
@@ -746,7 +747,8 @@ public class SL2Python extends SLBaseListener {
                         }
                     }
                 }
-                String relleno =  r.repeat(Integer.parseInt(a));
+                String relleno = String.join("", Collections.nCopies(Integer.parseInt(a), r));
+                //String relleno =  r.repeat(Integer.parseInt(a));
                 String numeroBase =  "str(round("+n+","+cant_dec+"))";
                 if (cant_dec.equals("0")){
                     numeroBase = "str(round("+n+"))";
