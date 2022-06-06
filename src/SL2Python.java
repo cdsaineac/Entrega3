@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.valueOf;
@@ -199,10 +200,9 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterSentencia_interna(SLParser.Sentencia_internaContext ctx){
-        System.out.print("\t".repeat(numTabs));
-//        if(ctx.ID() != null && !inLlamadaSubrutina){
-//            System.out.print(ctx.ID().getText());
-//        }
+        String temp = String.join("", Collections.nCopies(numTabs, "\t"));
+        System.out.print(temp);
+        //System.out.print("\t".repeat(numTabs));
     }
 
 
@@ -255,7 +255,9 @@ public class SL2Python extends SLBaseListener {
             funcionPredefinida = true;
             traduceFuncionPredefinidaSentencia(ctx);
         }
-        System.out.print("\t".repeat(numTabs));
+        String temp = String.join("", Collections.nCopies(numTabs, "\t"));
+        System.out.print(temp);
+        //System.out.print("\t".repeat(numTabs));
     }
     @Override
     public void exitAsignacion(SLParser.AsignacionContext ctx) {

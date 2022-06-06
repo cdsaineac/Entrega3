@@ -1,11 +1,37 @@
-programa declaraciones_variables
-
+/*
+OBJETIVO: Calcular e imprimir la suma de los primeros n
+numeros enteros. Muestra el uso de subrutinas.
+AUTOR: jsegovia
+*/
 var
-  n, suma, k : numerico
-  v_disp, // Velocidad inicial
-  a_disp : numerico // Angulo de disparo
-  a_disp_rad : numerico; // Igual que a_disp pero en radianes
-  h_max : numerico // Altura maxima
+  tot : numerico
+  n : numerico
 inicio
-  imprimir ("Hola, aquí solo se hacen declaraciones de variables")
+  imprimir_explicacion()
+  imprimir ("Numero entero? ")
+  n = 100 // Omitimos leer (n)
+  calcular_suma (n)
+  imprimir ("\nLa suma de los primeros ", n, "números enteros es ", tot)
+fin
+
+/* continuación del programa ejemplo_llamada_subrutinas */
+subrutina imprimir_explicacion()
+inicio
+  imprimir ("\nEste programa de ejemplo calcula la suma de los enteros",
+            "\npositivos comprendidos entre 1 y un valor ",
+            "que se ingresa\n")
+fin
+
+subrutina calcular_suma (entero_tope : numerico)
+/*
+Ejemplo de subrutina que recibe un parametro.
+*/
+var
+k : numerico
+inicio
+  tot = 0
+  desde k = 1 hasta entero_tope
+  {
+    tot = tot + k
+  }
 fin
