@@ -16,20 +16,12 @@ otraCadena : cadena
 otraNumero : numAlias
 otroLogico : logico
 const
-pi = "3"; i = 0; j = -5
+pi = 3.1416; i = 0; j = -5
 verdadero = FALSE
 e = 3
 falso = TRUE
 var
   n, suma, k : numerico
 inicio
-  imprimir ("\nSuma de numeros pares entre 1 y n.\nPor favor ",
-            "ingrese un valor para n: ")
-  leer (n)
-  suma = 0
-  desde k=2 hasta n paso 2  // Comentario ciclo desde ... hasta
-  {
-    suma = suma + k
-  }
-  imprimir ("\nLa suma es ", suma)
+  imprimir("Hola Mundo")
 fin

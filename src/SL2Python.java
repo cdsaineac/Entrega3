@@ -3,10 +3,7 @@ import grammar.SLParser;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static java.lang.String.valueOf;
 
@@ -193,7 +190,8 @@ public class SL2Python extends SLBaseListener {
 
     @Override
     public void enterSentencia_interna(SLParser.Sentencia_internaContext ctx){
-        System.out.print("\t".repeat(numTabs));
+        String temp = String.join("", Collections.nCopies(numTabs, "\t"));
+        System.out.print(temp);
 //        if(ctx.ID() != null && !inLlamadaSubrutina){
 //            System.out.print(ctx.ID().getText());
 //        }
@@ -246,7 +244,8 @@ public class SL2Python extends SLBaseListener {
             funcionPredefinida = true;
             traduceFuncionPredefinidaSentencia(ctx);
         }
-        System.out.print("\t".repeat(numTabs));
+        String temp = String.join("", Collections.nCopies(numTabs, "\t"));
+        System.out.print(temp);
     }
     @Override
     public void exitAsignacion(SLParser.AsignacionContext ctx) {
@@ -543,6 +542,26 @@ public class SL2Python extends SLBaseListener {
             System.out.print("; ");
         }else{
             System.out.println("");
+        }
+    }
+
+    @Override
+    public void enterSigno(SLParser.SignoContext ctx){
+        if(ctx.TK_RESTA() != null){
+            System.out.print("-");
+        }
+        if(ctx.TK_SUMA() != null){
+            System.out.print("+");
+        }
+    }
+
+    @Override
+    public void enterVariable_aux(SLParser.Variable_auxContext ctx){
+        if(ctx.ID() != null){
+            System.out.print(ctx.ID().getText());
+        }
+        if(ctx.TK_NUMERO() != null){
+            System.out.print(ctx.TK_NUMERO().getText());
         }
     }
 
